@@ -32,8 +32,8 @@ def generate_countdown_image(remaining_time):
 
     # 🔹 Lettergrootte aanpassen
     try:
-        font_large = ImageFont.truetype("DejaVuSans-Bold.ttf", 70)
-        font_small = ImageFont.truetype("DejaVuSans-Bold.ttf", 25)
+        font_large = ImageFont.truetype("DejaVuSans-Bold.ttf", 28)
+        font_small = ImageFont.truetype("DejaVuSans-Bold.ttf", 12)
     except IOError:
         font_large = ImageFont.load_default()
         font_small = ImageFont.load_default()
