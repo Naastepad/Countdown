@@ -79,7 +79,7 @@ def countdown_png():
 def generate_countdown_gif(end_time):
     """ Genereert een GIF van 30 seconden met exact 1 seconde per frame """
     frames = []
-    duration_per_frame = 10  # 🔹 Nu precies 1 seconde per frame
+    duration_per_frame = 100  # 🔹 Nu precies 1 seconde per frame
 
     for i in range(30):  # 30 frames (30 seconden)
         remaining_time = max(0, end_time - int(time.time()) - i)  # 🔹 Tel per seconde af
@@ -94,7 +94,7 @@ def generate_countdown_gif(end_time):
 
     # 🔹 GIF genereren met 1 seconde per frame
     gif_io = io.BytesIO()
-    imageio.mimsave(gif_io, frames, format="GIF", duration=10)  # 🔹 1 seconde per frame
+    imageio.mimsave(gif_io, frames, format="GIF", duration=100)  # 🔹 1 seconde per frame
     gif_io.seek(0)
 
     return gif_io
