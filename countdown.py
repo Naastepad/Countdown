@@ -32,15 +32,15 @@ def generate_countdown_image(remaining_time):
 
     # 🔹 Lettergrootte aanpassen
     try:
-        font_large = ImageFont.truetype("DejaVuSans-Bold.ttf", 28)
-        font_small = ImageFont.truetype("DejaVuSans-Bold.ttf", 12)
+        font_large = ImageFont.truetype("DejaVuSans-Bold.ttf", 42)
+        font_small = ImageFont.truetype("DejaVuSans-Bold.ttf", 21)
     except IOError:
         font_large = ImageFont.load_default()
         font_small = ImageFont.load_default()
 
     # 🔹 Countdown waarden en labels
     values = [f"{days:02}", f"{hours:02}", f"{minutes:02}", f"{seconds:02}"]
-    labels = ["Dagen", "Uren", "Minuten", "Seconden"]
+    labels = ["dagen", "uren", "minuten", "seconden"]
 
     # 🔹 Posities voor blokken
     block_width = width // 4
@@ -77,9 +77,9 @@ def countdown_png():
     return Response(img_io, mimetype='image/png')
 
 def generate_countdown_gif(end_time):
-    """ Genereert een GIF van 30 seconden met exact 1 seconde per frame """
+    """ Genereert een GIF van 30 seconden met 1 seconde per frame en oneindige loop """
     frames = []
-    duration_per_frame = 1000  # 🔹 Nu precies 1 seconde per frame
+    duration_per_frame = 1000  # 🔹 1000ms = 1 seconde per frame
 
     for i in range(30):  # 30 frames (30 seconden)
         remaining_time = max(0, end_time - int(time.time()) - i)  # 🔹 Tel per seconde af
@@ -92,9 +92,9 @@ def generate_countdown_gif(end_time):
 
         frames.append(imageio.imread(img_io))
 
-    # 🔹 GIF genereren met 1 seconde per frame
+    # 🔹 GIF genereren met correcte snelheid en oneindige loop
     gif_io = io.BytesIO()
-    imageio.mimsave(gif_io, frames, format="GIF", duration=1000)  # 🔹 1 seconde per frame
+    imageio.mimsave(gif_io, frames, format="GIF", duration=duration_per_frame, loop=0)  # 🔹 Nu echt 1 sec per frame & oneindige looping
     gif_io.seek(0)
 
     return gif_io
