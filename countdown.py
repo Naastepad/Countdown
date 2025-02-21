@@ -94,7 +94,7 @@ def generate_countdown_gif(end_time):
 
     # 🔹 GIF genereren met 1 seconde per frame
     gif_io = io.BytesIO()
-    imageio.mimsave(gif_io, frames, format="GIF", duration=1)  # 🔹 1 seconde per frame
+    imageio.mimsave(gif_io, frames, format="GIF", duration=10)  # 🔹 1 seconde per frame
     gif_io.seek(0)
 
     return gif_io
