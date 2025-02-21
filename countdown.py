@@ -40,11 +40,11 @@ def generate_countdown_image(remaining_time):
 
     # 🔹 Betere lettergroottes voor betere leesbaarheid
     try:
-        font_large = ImageFont.truetype("DejaVuSans-Bold.ttf", 60)
-        font_small = ImageFont.truetype("DejaVuSans-Bold.ttf", 22)
-    except IOError:
-        font_large = ImageFont.load_default()
-        font_small = ImageFont.load_default()
+    font_large = ImageFont.truetype("NotoSansSymbols-Regular.ttf", 60)
+    font_small = ImageFont.truetype("NotoSansSymbols-Regular.ttf", 22)
+except IOError:
+    font_large = ImageFont.load_default()
+    font_small = ImageFont.load_default()
 
     # 🔹 Bovenste regel met tijdseenheid labels
     labels = [day_label, hour_label, minute_label, second_label]
