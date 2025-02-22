@@ -3,3 +3,4 @@ Pillow
 gunicorn
 imageio
 cairocffi
+pycairo
