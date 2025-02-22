@@ -30,16 +30,16 @@ def generate_countdown_image(remaining_time):
     surface = cairo.ImageSurface(cairo.FORMAT_RGB24, width, height)
     ctx = cairo.Context(surface)
 
-    # Achtergrondkleur
-    ctx.set_source_rgb(0, 0.34, 0.71)  # Blauw
+    # Blauwe achtergrond
+    ctx.set_source_rgb(0, 0.34, 0.71)
     ctx.rectangle(0, 0, width, height)
     ctx.fill()
 
-    # Gebruik een standaard font
+    # Standaard font instellen
     ctx.set_source_rgb(1, 1, 1)  # Wit
     ctx.select_font_face("Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-    
-    # Labels en waarden
+
+    # Labels zonder emoji's
     labels = ["DAGEN", "UREN", "MINUTEN", "SECONDEN"]
     values = [f"{days:02d}", f"{hours:02d}", f"{minutes:02d}", f"{seconds:02d}"]
 
@@ -50,37 +50,32 @@ def generate_countdown_image(remaining_time):
         ctx.move_to(x_pos, 40)
         ctx.show_text(label)
 
-    # Countdown cijfers
+    # Grote waarden in het midden
     ctx.set_font_size(36)
     for i, value in enumerate(values):
         x_pos = 40 + i * 140
         ctx.move_to(x_pos, 100)
         ctx.show_text(value)
 
-    # Tekst onderaan
+    # Korte tekst onderaan
     ctx.set_font_size(14)
     ctx.move_to(50, 180)
-    ctx.show_text("Aanmelden voor de O∴ L∴ is mogelijk tot")
+    ctx.show_text("Aanmelden is mogelijk tot")
 
-    ctx.move_to(320, 180)
+    ctx.move_to(280, 180)
     ctx.show_text(datetime.datetime.fromtimestamp(end_time).strftime("%d-%m-%Y %H:%M:%S"))
 
-    # PNG opslaan in geheugen
+    # PNG genereren
     surface.flush()
     img_io = io.BytesIO()
     surface.write_to_png(img_io)
     img_io.seek(0)
-    
-    return img_io
 
-@app.route('/')
-def home():
-    """ Testpagina om te controleren of de server werkt """
-    return "De countdown server draait! Gebruik /countdown.png?end=YYYY-MM-DD+HH:MM:SS"
+    return img_io
 
 @app.route('/countdown.png')
 def countdown_png():
-    """ Endpoint voor PNG countdown """
+    """ API endpoint om een countdown afbeelding te genereren """
     end_string = request.args.get('end', "2025-01-01 00:00:00")
     global end_time
     end_time = parse_end_time(end_string)
@@ -96,7 +91,7 @@ def countdown_png():
 
 @app.route('/countdown.gif')
 def countdown_gif():
-    """ Endpoint voor GIF countdown """
+    """ API endpoint om een countdown GIF te genereren """
     end_string = request.args.get('end', "2025-01-01 00:00:00")
     global end_time
     end_time = parse_end_time(end_string)
@@ -111,9 +106,9 @@ def countdown_gif():
         img_io = generate_countdown_image(remaining_time)
         frames.append(imageio.imread(img_io))
 
-    # GIF maken
+    # GIF genereren met 1000ms vertraging per frame
     gif_io = io.BytesIO()
-    imageio.mimsave(gif_io, frames, format="GIF", duration=1, loop=0)
+    imageio.mimsave(gif_io, frames, format="GIF", duration=1.0, loop=0)  # 1.0s per frame
     gif_io.seek(0)
 
     return Response(gif_io, mimetype='image/gif')
