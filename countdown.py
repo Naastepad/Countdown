@@ -1,4 +1,30 @@
 import os
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+def generate_countdown_image(remaining_time):
+    """ Genereert een countdown afbeelding met verbeterde breedte en layout """
+    
+    font_path = "fonts/NotoColorEmoji.ttf"
+    
+    # Controleer of het bestand bestaat
+    if not os.path.exists(font_path):
+        logging.error(f"Fontbestand niet gevonden: {font_path}")
+    else:
+        logging.info(f"Fontbestand gevonden: {font_path}")
+
+    # Probeer het lettertype te laden
+    try:
+        font_large = ImageFont.truetype(font_path, 28)
+        font_small = ImageFont.truetype(font_path, 12)
+        logging.info("Lettertype correct geladen!")
+    except IOError:
+        logging.error("Kon het lettertype niet laden, standaard lettertype wordt gebruikt.")
+        font_large = ImageFont.load_default()
+        font_small = ImageFont.load_default()
+    
+    # Verder met de bestaande functie...
 import datetime
 import time
 import io
