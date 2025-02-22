@@ -1,4 +1,12 @@
 import os
+
+FONT_PATH = os.path.join(os.path.dirname(__file__), "fonts/NotoColorEmoji.ttf")
+
+if os.path.exists(FONT_PATH):
+    print(f"✅ Emoji-lettertype gevonden: {FONT_PATH}")
+else:
+    print("❌ Emoji-lettertype NIET gevonden!")
+
 import datetime
 import time
 import io
