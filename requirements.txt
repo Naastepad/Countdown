@@ -4,5 +4,4 @@ gunicorn
 imageio
 cairocffi
 pycairo
-harfbuzz
 freetype-py
