@@ -2,6 +2,6 @@ Flask
 Pillow
 gunicorn
 imageio
-numpy
 cairocffi
 pycairo
+pygobject
