@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
 set -eux
 
-# Maak de fonts-map als die nog niet bestaat
-mkdir -p /usr/share/fonts/truetype/noto
+# Installeer alleen de essentiële dependencies
+apt-get update && apt-get install -y \
+    libcairo2 \
+    libcairo2-dev \
+    libffi-dev \
+    python3-cffi
 
-# Download NotoColorEmoji als het niet bestaat
-if [ ! -f /usr/share/fonts/truetype/noto/NotoColorEmoji.ttf ]; then
-    wget -O /usr/share/fonts/truetype/noto/NotoColorEmoji.ttf https://github.com/google/fonts/raw/main/ofl/notocoloremoji/NotoColorEmoji.ttf
-    fc-cache -f -v  # Forceer herladen van font-cache
-fi
-
-# Installeer Cairo via pip (apt-get werkt niet op Render.com)
+# Installeer Python packages
 pip install --no-cache-dir cairocffi pycairo
