@@ -1,153 +1,135 @@
 import os
-
-FONT_PATH = os.path.join(os.path.dirname(__file__), "fonts/NotoColorEmoji.ttf")
-
-if os.path.exists(FONT_PATH):
-    print(f"✅ Emoji-lettertype gevonden: {FONT_PATH}")
-else:
-    print("❌ Emoji-lettertype NIET gevonden!")
-
 import datetime
 import time
 import io
+import imageio
+import flask
 import cairo
 from flask import Flask, Response, request
 from urllib.parse import unquote
 
 app = Flask(__name__)
 
-# 🔹 Pad naar lettertype met emoji-ondersteuning
-FONT_PATH = "fonts/NotoColorEmoji.ttf"
+# ✅ Pad naar emoji-font (moet kloppen met build.sh!)
+FONT_PATH = "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf"
 
-# 🔹 Canvas-grootte instellen
-WIDTH, HEIGHT = 600, 200
-BG_COLOR = (0, 0.34, 0.72)  # Blauw
-
-# 🔹 Maçonnieke symbolen
-EMOJIS = {
-    "dagen": "🌙",
-    "uren": "⭐️",
-    "minuten": "✨",
-    "seconden": "☀️",
-    "sep1": "🪨",
-    "sep2": "∴",
-    "sep3": "◻️",
-}
-
-# 🔹 Functie om datumstring naar een UNIX timestamp te converteren
 def parse_end_time(end_string):
+    """ Converteert een datum-string naar een UNIX-timestamp """
     try:
-        end_string = unquote(end_string).replace("+", " ")  
+        end_string = unquote(end_string).replace("+", " ")  # Spaties vervangen
         dt = datetime.datetime.strptime(end_string, "%Y-%m-%d %H:%M:%S")
-        return int(dt.timestamp())
+        return int(dt.timestamp())  # Zet om naar UNIX timestamp
     except ValueError:
-        return None  
+        return None  # Ongeldige invoer
 
-# 🔹 Functie om countdown-afbeelding te genereren met Cairo
 def generate_countdown_image(remaining_time):
+    """ Genereert een countdown afbeelding met Cairo en emoji's """
     days = remaining_time // 86400
     hours = (remaining_time % 86400) // 3600
     minutes = (remaining_time % 3600) // 60
     seconds = remaining_time % 60
 
-    # Maak een nieuwe afbeelding
-    surface = cairo.ImageSurface(cairo.FORMAT_RGB24, WIDTH, HEIGHT)
+    # ✅ Afmetingen van de afbeelding
+    width, height = 600, 200
+    surface = cairo.ImageSurface(cairo.FORMAT_RGB24, width, height)
     ctx = cairo.Context(surface)
 
-    # Achtergrondkleur instellen
-    ctx.set_source_rgb(*BG_COLOR)
-    ctx.paint()
+    # ✅ Achtergrondkleur (blauw)
+    ctx.set_source_rgb(0, 0.34, 0.71)  # RGB: (0, 87, 183)
+    ctx.rectangle(0, 0, width, height)
+    ctx.fill()
 
-    # Laad het lettertype
+    # ✅ Laad emoji-vriendelijk lettertype
     if os.path.exists(FONT_PATH):
-        font_face = cairo.ToyFontFace(FONT_PATH, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+        font = FONT_PATH
     else:
-        font_face = cairo.ToyFontFace("Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+        font = "Sans"  # Valt terug op systeemfont als emoji-font ontbreekt
 
-    ctx.set_font_face(font_face)
+    ctx.select_font_face(font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
 
-    # 🔹 Labels boven de cijfers
-    ctx.set_font_size(20)
-    labels = [f"{EMOJIS['dagen']} DAGEN", f"{EMOJIS['uren']} UREN", f"{EMOJIS['minuten']} MINUTEN", f"{EMOJIS['seconden']} SECONDEN"]
+    # ✅ Countdown labels en emoji's
+    labels = ["🌙 DAGEN", "⭐ UREN", "✨ MINUTEN", "☀️ SECONDEN"]
+    values = [f"{days:02} 🪨", f"{hours:02} ∴", f"{minutes:02} ◻️", f"{seconds:02}"]
+
+    # ✅ Teken labels bovenaan
+    ctx.set_font_size(18)
+    ctx.set_source_rgb(1, 1, 1)  # Wit
     for i, label in enumerate(labels):
-        x_pos = i * (WIDTH / 4) + 50
-        ctx.move_to(x_pos, 30)
-        ctx.set_source_rgb(1, 1, 1)  # Wit
+        x_pos = 40 + i * 140
+        ctx.move_to(x_pos, 40)
         ctx.show_text(label)
 
-    # 🔹 Countdown cijfers + scheidingstekens
-    ctx.set_font_size(40)
-    values = [
-        f"{days:02} {EMOJIS['sep1']}", f"{hours:02} {EMOJIS['sep2']}", 
-        f"{minutes:02} {EMOJIS['sep3']}", f"{seconds:02}"
-    ]
-    
+    # ✅ Teken countdown waarden
+    ctx.set_font_size(36)
     for i, value in enumerate(values):
-        x_pos = i * (WIDTH / 4) + 50
+        x_pos = 40 + i * 140
         ctx.move_to(x_pos, 100)
-        ctx.set_source_rgb(1, 1, 1)
         ctx.show_text(value)
 
-    # 🔹 Instructie onderaan
-    instruction_text = f"Aanmelden voor de O∴ L∴ is mogelijk tot {datetime.datetime.fromtimestamp(time.time() + remaining_time).strftime('%d-%m-%Y %H:%M:%S')}"
+    # ✅ Extra info onderaan
     ctx.set_font_size(14)
-    ctx.move_to(WIDTH / 6, HEIGHT - 30)
-    ctx.show_text(instruction_text)
+    ctx.move_to(50, 180)
+    ctx.show_text("Aanmelden voor de O∴ L∴ is mogelijk tot")
 
-    return surface
+    ctx.move_to(320, 180)
+    ctx.show_text(datetime.datetime.fromtimestamp(end_time).strftime("%d-%m-%Y %H:%M:%S"))
 
-# 🔹 API endpoint voor PNG
-@app.route('/countdown.png')
-def countdown_png():
-    end_string = request.args.get('end', "2025-01-01 00:00:00")
-    end_timestamp = parse_end_time(end_string)
+    surface.flush()
 
-    if end_timestamp is None:
-        return "Invalid date format. Use YYYY-MM-DD HH:MM:SS", 400
-
-    now = int(time.time())
-    remaining_time = max(0, end_timestamp - now)
-
-    surface = generate_countdown_image(remaining_time)
-    
+    # ✅ Opslaan als PNG in geheugen
     img_io = io.BytesIO()
     surface.write_to_png(img_io)
     img_io.seek(0)
 
+    return img_io
+
+@app.route('/countdown.png')
+def countdown_png():
+    """ API endpoint om een countdown afbeelding te genereren """
+
+    end_string = request.args.get('end', "2025-01-01 00:00:00")
+    global end_time
+    end_time = parse_end_time(end_string)
+
+    if end_time is None:
+        return "Invalid date format. Use YYYY-MM-DD HH:MM:SS", 400
+
+    now = int(time.time())
+    remaining_time = max(0, end_time - now)
+
+    img_io = generate_countdown_image(remaining_time)
+
     return Response(img_io, mimetype='image/png')
 
-# 🔹 Functie voor GIF-generatie
 def generate_countdown_gif(end_time):
+    """ Genereert een countdown GIF met Cairo en emoji's """
     frames = []
-    duration_per_frame = 1000  # 🔹 Precies 1 seconde per frame
+    duration_per_frame = 1000  # ✅ 1 seconde per frame
 
-    for i in range(30):
-        remaining_time = max(0, end_time - int(time.time()) - i)
-        surface = generate_countdown_image(remaining_time)
+    for i in range(30):  # 30 seconden aftellen
+        remaining_time = max(0, end_time - int(time.time()) - i)  # ✅ Tel per seconde af
+        img_io = generate_countdown_image(remaining_time)
+        frames.append(imageio.imread(img_io))
 
-        img_io = io.BytesIO()
-        surface.write_to_png(img_io)
-        img_io.seek(0)
-        frames.append(img_io.read())
-
+    # ✅ GIF genereren met loop=0 (oneindige herhaling)
     gif_io = io.BytesIO()
-    from PIL import Image
-    images = [Image.open(io.BytesIO(frame)) for frame in frames]
-    images[0].save(gif_io, format="GIF", save_all=True, append_images=images[1:], duration=1000, loop=0)
+    imageio.mimsave(gif_io, frames, format="GIF", duration=1, loop=0)
     gif_io.seek(0)
 
     return gif_io
 
-# 🔹 API endpoint voor GIF
 @app.route('/countdown.gif')
 def countdown_gif():
-    end_string = request.args.get('end', "2025-01-01 00:00:00")
-    end_timestamp = parse_end_time(end_string)
+    """ API endpoint om een countdown GIF te genereren """
 
-    if end_timestamp is None:
+    end_string = request.args.get('end', "2025-01-01 00:00:00")
+    global end_time
+    end_time = parse_end_time(end_string)
+
+    if end_time is None:
         return "Invalid date format. Use YYYY-MM-DD HH:MM:SS", 400
 
-    gif_io = generate_countdown_gif(end_timestamp)
+    gif_io = generate_countdown_gif(end_time)
     return Response(gif_io, mimetype='image/gif')
 
 if __name__ == '__main__':
