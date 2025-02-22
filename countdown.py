@@ -3,14 +3,13 @@ import datetime
 import time
 import io
 import imageio
-import flask
 from flask import Flask, Response, request
 from urllib.parse import unquote
 from PIL import Image, ImageDraw, ImageFont
 
 app = Flask(__name__)
 
-# Zorg ervoor dat je NotoColorEmoji.ttf in de fonts-map hebt staan
+# Zorg ervoor dat de emoji-font correct wordt geladen
 FONT_PATH = os.path.join(os.path.dirname(__file__), "fonts", "NotoColorEmoji.ttf")
 
 def parse_end_time(end_string):
@@ -23,7 +22,7 @@ def parse_end_time(end_string):
         return None
 
 def generate_countdown_image(remaining_time):
-    """ Genereert een countdown afbeelding met Pillow en HarfBuzz voor emoji's """
+    """ Genereert een countdown afbeelding met Pillow voor emoji's """
     days = remaining_time // 86400
     hours = (remaining_time % 86400) // 3600
     minutes = (remaining_time % 3600) // 60
