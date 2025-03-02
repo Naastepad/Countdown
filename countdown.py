@@ -10,6 +10,15 @@ from urllib.parse import unquote
 
 app = Flask(__name__)
 
+# Algemene instellingen
+WIDTH, HEIGHT = 600, 200
+FONT_SIZE_LABEL = 18
+FONT_SIZE_VALUE = 36
+FONT_SIZE_FOOTER = 14
+BG_COLOR = (0, 0.34, 0.71)  # Blauw
+TEXT_COLOR = (1, 1, 1)  # Wit
+GIF_DELAY = 1000  # Vertraging per frame in ms
+
 def parse_end_time(end_string):
     """ Converteert een datum-string naar een UNIX-timestamp """
     try:
@@ -19,53 +28,54 @@ def parse_end_time(end_string):
     except ValueError:
         return None
 
-def generate_countdown_image(remaining_time):
+def generate_countdown_image(remaining_time, end_time):
     """ Genereert een countdown afbeelding met Cairo """
     days = remaining_time // 86400
     hours = (remaining_time % 86400) // 3600
     minutes = (remaining_time % 3600) // 60
     seconds = remaining_time % 60
 
-    width, height = 600, 200
-    surface = cairo.ImageSurface(cairo.FORMAT_RGB24, width, height)
+    surface = cairo.ImageSurface(cairo.FORMAT_RGB24, WIDTH, HEIGHT)
     ctx = cairo.Context(surface)
 
-    # Blauwe achtergrond
-    ctx.set_source_rgb(0, 0.34, 0.71)
-    ctx.rectangle(0, 0, width, height)
+    # Achtergrondkleur
+    ctx.set_source_rgb(*BG_COLOR)
+    ctx.rectangle(0, 0, WIDTH, HEIGHT)
     ctx.fill()
 
-    # Standaard font instellen
-    ctx.set_source_rgb(1, 1, 1)  # Wit
+    # Stel standaard font in
     ctx.select_font_face("Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
 
-    # Labels zonder emoji's
+    # Labels en waarden
     labels = ["DAGEN", "UREN", "MINUTEN", "SECONDEN"]
     values = [f"{days:02d}", f"{hours:02d}", f"{minutes:02d}", f"{seconds:02d}"]
 
-    # Labels bovenaan
-    ctx.set_font_size(18)
+    # Teken labels
+    ctx.set_source_rgb(*TEXT_COLOR)
+    ctx.set_font_size(FONT_SIZE_LABEL)
     for i, label in enumerate(labels):
         x_pos = 40 + i * 140
         ctx.move_to(x_pos, 40)
         ctx.show_text(label)
 
-    # Grote waarden in het midden
-    ctx.set_font_size(36)
+    # Teken waarden
+    ctx.set_font_size(FONT_SIZE_VALUE)
     for i, value in enumerate(values):
         x_pos = 40 + i * 140
         ctx.move_to(x_pos, 100)
         ctx.show_text(value)
 
-    # Korte tekst onderaan
-    ctx.set_font_size(14)
+    # Teken korte tekst onderaan
+    ctx.set_font_size(FONT_SIZE_FOOTER)
     ctx.move_to(50, 180)
     ctx.show_text("Aanmelden is mogelijk tot")
 
-    ctx.move_to(280, 180)
-    ctx.show_text(datetime.datetime.fromtimestamp(end_time).strftime("%d-%m-%Y %H:%M:%S"))
+    # Controleer of end_time geldig is
+    if end_time:
+        ctx.move_to(320, 180)
+        ctx.show_text(datetime.datetime.fromtimestamp(end_time).strftime("%d-%m-%Y %H:%M:%S"))
 
-    # PNG genereren
+    # PNG-output genereren
     surface.flush()
     img_io = io.BytesIO()
     surface.write_to_png(img_io)
@@ -77,7 +87,6 @@ def generate_countdown_image(remaining_time):
 def countdown_png():
     """ API endpoint om een countdown afbeelding te genereren """
     end_string = request.args.get('end', "2025-01-01 00:00:00")
-    global end_time
     end_time = parse_end_time(end_string)
 
     if end_time is None:
@@ -86,14 +95,13 @@ def countdown_png():
     now = int(time.time())
     remaining_time = max(0, end_time - now)
 
-    img_io = generate_countdown_image(remaining_time)
+    img_io = generate_countdown_image(remaining_time, end_time)
     return Response(img_io, mimetype='image/png')
 
 @app.route('/countdown.gif')
 def countdown_gif():
     """ API endpoint om een countdown GIF te genereren """
     end_string = request.args.get('end', "2025-01-01 00:00:00")
-    global end_time
     end_time = parse_end_time(end_string)
 
     if end_time is None:
@@ -103,12 +111,12 @@ def countdown_gif():
     for i in range(30):  # 30 frames
         now = int(time.time()) + i
         remaining_time = max(0, end_time - now)
-        img_io = generate_countdown_image(remaining_time)
+        img_io = generate_countdown_image(remaining_time, end_time)
         frames.append(imageio.imread(img_io))
 
-    # GIF genereren met 1000ms vertraging per frame
+    # Genereer GIF met **1000 ms per frame**
     gif_io = io.BytesIO()
-    imageio.mimsave(gif_io, frames, format="GIF", duration=1.0, loop=0)  # 1.0s per frame
+    imageio.mimsave(gif_io, frames, format="GIF", duration=GIF_DELAY / 1000, loop=0)  # 1000ms per frame
     gif_io.seek(0)
 
     return Response(gif_io, mimetype='image/gif')
